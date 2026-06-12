@@ -1,5 +1,5 @@
 ---
-title: Perfección
+title: Perfección, la mayor trampa del progreso
 description: Cuando suficientemente bueno supera la perfección
 pubDate: 2026-06-12
 tags:
