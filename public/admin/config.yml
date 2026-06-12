@@ -9,11 +9,12 @@ backend:
   # Worker de autenticación OAuth (Sveltia CMS auth) desplegado en Cloudflare.
   base_url: https://sveltia-cms-auth.odvprogra.workers.dev
 
-# Las imágenes que subas desde el panel van aquí (Astro las optimiza en el build).
-media_folder: 'src/assets/uploads'
-# Ruta con la que se referencian dentro del Markdown (relativa a cada .md,
-# que vive en src/content/<coleccion>/<idioma>/ → 3 niveles hasta src/assets).
-public_folder: '../../../assets/uploads'
+# Las imágenes que subas desde el panel se guardan en public/uploads/ y se
+# sirven en rutas absolutas (/uploads/...). Sveltia exige public_folder absoluto.
+# (Estas no pasan por la optimización de Astro; para imágenes optimizadas,
+#  insértalas manualmente desde src/assets/ con rutas relativas.)
+media_folder: 'public/uploads'
+public_folder: '/uploads'
 
 # Edición en dos idiomas dentro de la misma vista.
 i18n:
