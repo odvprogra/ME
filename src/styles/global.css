@@ -38,6 +38,10 @@
 html {
   scroll-behavior: smooth;
   color-scheme: light;
+  /* evita que iOS infle el texto al rotar el dispositivo */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -48,7 +52,19 @@ body {
   font-size: 1.0425rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
+}
+
+/* Ningún elemento debería desbordar el ancho del viewport (causa del
+   pinch-zoom que "desminimiza" la página en móvil) */
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Textura sutil de papel */
@@ -158,7 +174,10 @@ hr {
 .container {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 clamp(1.15rem, 5vw, 1.5rem);
+  /* respeta el notch en móviles con viewport-fit=cover */
+  padding-left: max(clamp(1.15rem, 5vw, 1.5rem), env(safe-area-inset-left));
+  padding-right: max(clamp(1.15rem, 5vw, 1.5rem), env(safe-area-inset-right));
 }
 
 .narrow {
@@ -173,13 +192,13 @@ main {
    le gana al selector de elemento y aplastaría el ritmo vertical */
 section,
 section.container {
-  padding-block: 4rem;
+  padding-block: clamp(2.6rem, 8vw, 4rem);
 }
 
 /* la primera sección de cada página respira más bajo el header,
    al mismo ritmo que el hero de la portada */
 main > section:first-child {
-  padding-top: 5.5rem;
+  padding-top: clamp(3rem, 10vw, 5.5rem);
 }
 
 /* ---------- Componentes base ---------- */

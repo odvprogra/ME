@@ -41,7 +41,7 @@ const cornerPhrases =
 <html lang={lang}>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{pageTitle}</title>
@@ -98,6 +98,24 @@ const cornerPhrases =
     right: 1.3rem;
     bottom: 1.3rem;
     z-index: 60;
+  }
+
+  /* el bocadillo de la esquina abre hacia la izquierda para no salirse
+     por el borde derecho de la pantalla (evita scroll/zoom horizontal) */
+  .corner-buddy :global(.ib-bubble) {
+    left: auto;
+    right: 0;
+    transform: translateX(0) translateY(6px);
+  }
+
+  .corner-buddy :global(.ib-bubble.is-visible) {
+    transform: translateX(0) translateY(0);
+  }
+
+  .corner-buddy :global(.ib-bubble::after) {
+    left: auto;
+    right: 14px;
+    transform: translateX(0);
   }
 
   @media (max-width: 640px) {

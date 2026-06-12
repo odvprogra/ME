@@ -193,4 +193,33 @@ const aboutHref = lang === 'es' ? '/sobre-mi/' : '/en/about/';
       grid-template-columns: 1fr;
     }
   }
+
+  @media (max-width: 600px) {
+    .hero {
+      padding: 3rem 0 2.5rem;
+    }
+
+    .hero-grid {
+      gap: 1.5rem;
+    }
+
+    .hero-buddy {
+      min-height: 180px;
+    }
+
+    .lead {
+      font-size: 1.05rem;
+    }
+
+    .hero-actions {
+      gap: 1rem;
+      margin-top: 1.4rem;
+    }
+
+    /* en pantallas estrechas el botón ocupa todo el ancho para mejor toque */
+    .hero-actions .btn-primary {
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+  }
 </style>

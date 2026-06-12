@@ -560,6 +560,8 @@ const { size = 96, phrases = [], label, class: className } = Astro.props;
     padding: 0.5em 0.9em;
     border-radius: 8px;
     white-space: nowrap;
+    /* nunca debe empujar el ancho del viewport (causa pinch-zoom en móvil) */
+    max-width: min(15rem, 80vw);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease, transform 0.25s var(--ease-spring, ease);

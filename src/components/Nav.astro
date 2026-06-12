@@ -111,13 +111,32 @@ const isActive = (href: string) =>
     letter-spacing: 0.08em;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 600px) {
+    .nav {
+      /* logo en su propia fila; los enlaces en una segunda fila, repartidos */
+      flex-wrap: wrap;
+      height: auto;
+      padding-block: 0.7rem;
+      row-gap: 0.55rem;
+    }
+
     .nav-links {
-      gap: 1rem;
+      order: 2;
+      width: 100%;
+      gap: 0.4rem;
+      justify-content: space-between;
+      border-top: 1px solid var(--hairline);
+      padding-top: 0.6rem;
     }
 
     .nav-link {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    /* el conmutador de idioma queda pegado al final de la fila */
+    .lang-switch {
+      margin-left: 0.2rem;
     }
   }
 </style>
