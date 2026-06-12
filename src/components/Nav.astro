@@ -28,12 +28,34 @@ const isActive = (href: string) =>
 ---
 
 <header class="nav-wrap">
-  <nav class="container nav" aria-label="principal">
+  <nav-menu class="container nav" aria-label="principal">
     <a href={`${prefix}/`} class="logo" aria-label={t('site.title')}>
       oscar<span class="logo-dot">.</span>
     </a>
 
-    <div class="nav-links">
+    <div class="nav-actions">
+      <a
+        href={switchHref}
+        class="nav-link lang-switch lang-switch-quick"
+        aria-label={otherLang === 'en' ? 'Switch to English' : 'Cambiar a español'}
+      >
+        {otherLang.toUpperCase()}
+      </a>
+
+      <button
+        type="button"
+        class="nav-toggle"
+        aria-label={lang === 'es' ? 'Abrir menú' : 'Open menu'}
+        aria-expanded="false"
+        aria-controls="nav-links"
+      >
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+    </div>
+
+    <div class="nav-links" id="nav-links">
       {
         links.map((link) => (
           <a href={link.href} class:list={['nav-link', { active: isActive(link.href) }]}>
@@ -43,14 +65,46 @@ const isActive = (href: string) =>
       }
       <a
         href={switchHref}
-        class="nav-link lang-switch"
+        class="nav-link lang-switch lang-switch-menu"
         aria-label={otherLang === 'en' ? 'Switch to English' : 'Cambiar a español'}
       >
         {otherLang.toUpperCase()}
       </a>
     </div>
-  </nav>
+  </nav-menu>
 </header>
+
+<script>
+  class NavMenu extends HTMLElement {
+    connectedCallback() {
+      const btn = this.querySelector<HTMLButtonElement>('.nav-toggle');
+      const links = this.querySelector<HTMLElement>('.nav-links');
+      if (!btn || !links) return;
+
+      const close = () => {
+        this.classList.remove('is-open');
+        btn.setAttribute('aria-expanded', 'false');
+      };
+      const toggle = () => {
+        const open = this.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', String(open));
+      };
+
+      btn.addEventListener('click', toggle);
+      // cerrar al elegir un enlace o pulsar Escape
+      links.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('a')) close();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') close();
+      });
+    }
+  }
+
+  if (!customElements.get('nav-menu')) {
+    customElements.define('nav-menu', NavMenu);
+  }
+</script>
 
 <style>
   .nav-wrap {
@@ -67,6 +121,43 @@ const isActive = (href: string) =>
     justify-content: space-between;
     gap: 1.5rem;
     height: 4.2rem;
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  /* en escritorio el conmutador vive dentro del menú, no junto al logo */
+  .lang-switch-quick {
+    display: none;
+  }
+
+  /* botón hamburguesa: oculto en escritorio */
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    margin-right: -9px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-toggle-bar {
+    display: block;
+    width: 22px;
+    height: 2px;
+    margin: 0 auto;
+    background: var(--text);
+    border-radius: 2px;
+    transition: transform 0.25s ease, opacity 0.2s ease;
   }
 
   .logo {
@@ -113,30 +204,74 @@ const isActive = (href: string) =>
 
   @media (max-width: 600px) {
     .nav {
-      /* logo en su propia fila; los enlaces en una segunda fila, repartidos */
-      flex-wrap: wrap;
-      height: auto;
-      padding-block: 0.7rem;
-      row-gap: 0.55rem;
+      height: 3.7rem;
     }
 
+    .nav-toggle {
+      display: flex;
+    }
+
+    /* el conmutador rápido aparece junto a la hamburguesa */
+    .lang-switch-quick {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--hairline);
+      border-radius: 7px;
+      color: var(--text);
+    }
+
+    /* y desaparece de dentro del menú para no duplicarlo */
+    .lang-switch-menu {
+      display: none;
+    }
+
+    /* el panel de enlaces se despliega bajo el header */
     .nav-links {
-      order: 2;
-      width: 100%;
-      gap: 0.4rem;
-      justify-content: space-between;
-      border-top: 1px solid var(--hairline);
-      padding-top: 0.6rem;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--hairline);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+      padding: 0.4rem 0;
+      /* oculto por defecto, sin animar el layout */
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    :global(nav-menu.is-open) .nav-links {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
 
     .nav-link {
-      font-size: 0.9rem;
-      white-space: nowrap;
+      padding: 0.85rem clamp(1.15rem, 5vw, 1.5rem);
+      font-size: 1rem;
     }
 
-    /* el conmutador de idioma queda pegado al final de la fila */
-    .lang-switch {
-      margin-left: 0.2rem;
+    .nav-link.active {
+      box-shadow: inset 3px 0 0 var(--ink);
+    }
+
+    /* animación de la X al abrir */
+    :global(nav-menu.is-open) .nav-toggle-bar:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    :global(nav-menu.is-open) .nav-toggle-bar:nth-child(2) {
+      opacity: 0;
+    }
+
+    :global(nav-menu.is-open) .nav-toggle-bar:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
     }
   }
 </style>

@@ -43,6 +43,9 @@ const href = projectHref(project);
     gap: 0;
     padding: 28px;
     border-radius: 18px;
+    /* permite que la tarjeta se encoja dentro de su columna del grid;
+       sin esto el contenido la fuerza más ancha que el viewport en móvil */
+    min-width: 0;
   }
 
   .project-head {
@@ -59,6 +62,7 @@ const href = projectHref(project);
     font-weight: 600;
     letter-spacing: -0.015em;
     line-height: 1.2;
+    overflow-wrap: anywhere;
   }
 
   .badge {
@@ -96,12 +100,15 @@ const href = projectHref(project);
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid #F0EEE9;
+    min-width: 0;
   }
 
   .tech {
     display: flex;
     align-items: center;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    min-width: 0;
     font-family: var(--font-mono);
     font-size: 0.8rem;
     color: var(--text-faint);

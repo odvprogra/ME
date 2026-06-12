@@ -18,5 +18,8 @@
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "astro": "^6.4.6"
   },
-  "description": "El sitio de Oscar — mi llama, ya no oculta"
+  "description": "El sitio de Oscar — mi llama, ya no oculta",
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
 }
