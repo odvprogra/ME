@@ -1,9 +1,13 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 
+import cloudflare from '@astrojs/cloudflare';
+
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://oscar.example.com', // cámbialo cuando tengas dominio
+  // cámbialo cuando tengas dominio
+  site: 'https://oscar.example.com',
+
   i18n: {
     defaultLocale: 'es',
     locales: ['es', 'en'],
@@ -11,4 +15,6 @@ export default defineConfig({
       prefixDefaultLocale: false,
     },
   },
+
+  adapter: cloudflare(),
 });
