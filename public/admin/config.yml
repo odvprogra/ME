@@ -1,0 +1,70 @@
+# Configuración del panel de edición (Sveltia CMS, compatible con Decap).
+# Edita / crea / borra blogs y proyectos desde el navegador o el móvil;
+# cada acción genera un commit en GitHub y el sitio se reconstruye solo.
+
+backend:
+  name: github
+  repo: odvprogra/ME
+  branch: main
+  # Worker de autenticación OAuth (Sveltia CMS auth) desplegado en Cloudflare.
+  base_url: https://sveltia-cms-auth.odvprogra.workers.dev
+
+# Las imágenes que subas desde el panel van aquí (Astro las optimiza en el build).
+media_folder: 'src/assets/uploads'
+# Ruta con la que se referencian dentro del Markdown (relativa a cada .md,
+# que vive en src/content/<coleccion>/<idioma>/ → 3 niveles hasta src/assets).
+public_folder: '../../../assets/uploads'
+
+# Edición en dos idiomas dentro de la misma vista.
+i18n:
+  structure: multiple_folders
+  locales: [es, en]
+  default_locale: es
+
+collections:
+  # ---------------------------------------------------------------- BLOG
+  - name: blog
+    label: 'Blog'
+    label_singular: 'Entrada'
+    folder: 'src/content/blog'
+    create: true
+    slug: '{{slug}}'
+    extension: md
+    format: frontmatter
+    i18n: true
+    fields:
+      - { name: title, label: 'Título', widget: string, i18n: true }
+      - { name: description, label: 'Descripción', widget: text, i18n: true }
+      - { name: pubDate, label: 'Fecha', widget: datetime, date_format: 'YYYY-MM-DD', time_format: false, i18n: duplicate }
+      - { name: tags, label: 'Etiquetas', widget: list, default: [], required: false, i18n: true }
+      - { name: draft, label: 'Borrador', widget: boolean, default: false, i18n: duplicate }
+      - { name: translationSlug, label: 'Slug de la traducción', widget: string, required: false, i18n: duplicate, hint: 'Slug del mismo post en el otro idioma (sin prefijo de carpeta).' }
+      - { name: body, label: 'Contenido', widget: markdown, i18n: true }
+
+  # ------------------------------------------------------------ PROYECTOS
+  - name: projects
+    label: 'Proyectos'
+    label_singular: 'Proyecto'
+    folder: 'src/content/projects'
+    create: true
+    slug: '{{slug}}'
+    extension: md
+    format: frontmatter
+    i18n: true
+    fields:
+      - { name: title, label: 'Título', widget: string, i18n: true }
+      - { name: description, label: 'Descripción', widget: text, i18n: true }
+      - name: type
+        label: 'Tipo'
+        widget: select
+        options:
+          - { label: 'Trabajo', value: work }
+          - { label: 'Por diversión', value: fun }
+        i18n: duplicate
+      - { name: tech, label: 'Tecnologías', widget: list, default: [], required: false, i18n: duplicate }
+      - { name: link, label: 'Enlace demo', widget: string, required: false, i18n: duplicate }
+      - { name: repo, label: 'Repositorio', widget: string, required: false, i18n: duplicate }
+      - { name: featured, label: 'Destacado (sale en la portada)', widget: boolean, default: false, i18n: duplicate }
+      - { name: order, label: 'Orden', widget: number, default: 0, value_type: int, i18n: duplicate }
+      - { name: translationSlug, label: 'Slug de la traducción', widget: string, required: false, i18n: duplicate, hint: 'Slug del mismo proyecto en el otro idioma (sin prefijo de carpeta).' }
+      - { name: body, label: 'Contenido', widget: markdown, i18n: true }
