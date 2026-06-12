@@ -429,6 +429,14 @@ const { size = 96, phrases = [], label, class: className } = Astro.props;
         bubble.textContent = phrases[Math.floor(Math.random() * phrases.length)];
         bubble.hidden = false;
         bubble.classList.remove('is-visible');
+        // si no hay espacio arriba (p. ej. bajo el header fijo), el bocadillo
+        // se abre hacia abajo para no quedar cortado por la barra de navegación
+        const rect = this.getBoundingClientRect();
+        const header = document.querySelector('.nav-wrap');
+        const ceiling = header ? header.getBoundingClientRect().bottom : 0;
+        // dónde empezaría el borde superior del bocadillo si se abre hacia arriba
+        const bubbleTop = rect.top - bubble.offsetHeight - 12;
+        bubble.classList.toggle('below', bubbleTop < ceiling + 8);
         void bubble.offsetWidth;
         bubble.classList.add('is-visible');
         this.#later(() => bubble.classList.remove('is-visible'), 2400);
@@ -581,6 +589,24 @@ const { size = 96, phrases = [], label, class: className } = Astro.props;
     transform: translateX(-50%);
     border: 6px solid transparent;
     border-top-color: var(--ink, #161513);
+  }
+
+  /* variante: el bocadillo se abre hacia abajo (cuando no cabe arriba) */
+  ink-blob .ib-bubble.below {
+    bottom: auto;
+    top: calc(100% + 12px);
+    transform: translateX(-50%) translateY(-6px);
+  }
+
+  ink-blob .ib-bubble.below.is-visible {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  ink-blob .ib-bubble.below::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: var(--ink, #161513);
   }
 
   @media (prefers-reduced-motion: reduce) {
