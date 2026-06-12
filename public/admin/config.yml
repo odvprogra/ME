@@ -16,56 +16,93 @@ backend:
 media_folder: 'public/uploads'
 public_folder: '/uploads'
 
-# Edición en dos idiomas dentro de la misma vista.
-i18n:
-  structure: multiple_folders
-  locales: [es, en]
-  default_locale: es
-
+# Una colección por idioma: cada una apunta a su subcarpeta plana de .md,
+# que coincide exactamente con la estructura del proyecto (content/<col>/<idioma>/).
 collections:
-  # ---------------------------------------------------------------- BLOG
-  - name: blog
-    label: 'Blog'
-    label_singular: 'Entrada'
-    folder: 'src/content/blog'
+  # ----------------------------------------------------------- BLOG (ES)
+  - name: blog_es
+    label: 'Blog · Español'
+    label_singular: 'Entrada (ES)'
+    folder: 'src/content/blog/es'
     create: true
     slug: '{{slug}}'
     extension: md
     format: frontmatter
-    i18n: true
     fields:
-      - { name: title, label: 'Título', widget: string, i18n: true }
-      - { name: description, label: 'Descripción', widget: text, i18n: true }
-      - { name: pubDate, label: 'Fecha', widget: datetime, date_format: 'YYYY-MM-DD', time_format: false, i18n: duplicate }
-      - { name: tags, label: 'Etiquetas', widget: list, default: [], required: false, i18n: true }
-      - { name: draft, label: 'Borrador', widget: boolean, default: false, i18n: duplicate }
-      - { name: translationSlug, label: 'Slug de la traducción', widget: string, required: false, i18n: duplicate, hint: 'Slug del mismo post en el otro idioma (sin prefijo de carpeta).' }
-      - { name: body, label: 'Contenido', widget: markdown, i18n: true }
+      - { name: title, label: 'Título', widget: string }
+      - { name: description, label: 'Descripción', widget: text }
+      - { name: pubDate, label: 'Fecha', widget: datetime, date_format: 'YYYY-MM-DD', time_format: false }
+      - { name: tags, label: 'Etiquetas', widget: list, default: [], required: false }
+      - { name: draft, label: 'Borrador', widget: boolean, default: false }
+      - { name: translationSlug, label: 'Slug en inglés', widget: string, required: false, hint: 'Slug del mismo post en EN (sin carpeta).' }
+      - { name: body, label: 'Contenido', widget: markdown }
 
-  # ------------------------------------------------------------ PROYECTOS
-  - name: projects
-    label: 'Proyectos'
-    label_singular: 'Proyecto'
-    folder: 'src/content/projects'
+  # ----------------------------------------------------------- BLOG (EN)
+  - name: blog_en
+    label: 'Blog · English'
+    label_singular: 'Post (EN)'
+    folder: 'src/content/blog/en'
     create: true
     slug: '{{slug}}'
     extension: md
     format: frontmatter
-    i18n: true
     fields:
-      - { name: title, label: 'Título', widget: string, i18n: true }
-      - { name: description, label: 'Descripción', widget: text, i18n: true }
+      - { name: title, label: 'Title', widget: string }
+      - { name: description, label: 'Description', widget: text }
+      - { name: pubDate, label: 'Date', widget: datetime, date_format: 'YYYY-MM-DD', time_format: false }
+      - { name: tags, label: 'Tags', widget: list, default: [], required: false }
+      - { name: draft, label: 'Draft', widget: boolean, default: false }
+      - { name: translationSlug, label: 'Spanish slug', widget: string, required: false, hint: 'Slug of the same post in ES (no folder).' }
+      - { name: body, label: 'Content', widget: markdown }
+
+  # ------------------------------------------------------- PROYECTOS (ES)
+  - name: projects_es
+    label: 'Proyectos · Español'
+    label_singular: 'Proyecto (ES)'
+    folder: 'src/content/projects/es'
+    create: true
+    slug: '{{slug}}'
+    extension: md
+    format: frontmatter
+    fields:
+      - { name: title, label: 'Título', widget: string }
+      - { name: description, label: 'Descripción', widget: text }
       - name: type
         label: 'Tipo'
         widget: select
         options:
           - { label: 'Trabajo', value: work }
           - { label: 'Por diversión', value: fun }
-        i18n: duplicate
-      - { name: tech, label: 'Tecnologías', widget: list, default: [], required: false, i18n: duplicate }
-      - { name: link, label: 'Enlace demo', widget: string, required: false, i18n: duplicate }
-      - { name: repo, label: 'Repositorio', widget: string, required: false, i18n: duplicate }
-      - { name: featured, label: 'Destacado (sale en la portada)', widget: boolean, default: false, i18n: duplicate }
-      - { name: order, label: 'Orden', widget: number, default: 0, value_type: int, i18n: duplicate }
-      - { name: translationSlug, label: 'Slug de la traducción', widget: string, required: false, i18n: duplicate, hint: 'Slug del mismo proyecto en el otro idioma (sin prefijo de carpeta).' }
-      - { name: body, label: 'Contenido', widget: markdown, i18n: true }
+      - { name: tech, label: 'Tecnologías', widget: list, default: [], required: false }
+      - { name: link, label: 'Enlace demo', widget: string, required: false }
+      - { name: repo, label: 'Repositorio', widget: string, required: false }
+      - { name: featured, label: 'Destacado (sale en la portada)', widget: boolean, default: false }
+      - { name: order, label: 'Orden', widget: number, default: 0, value_type: int }
+      - { name: translationSlug, label: 'Slug en inglés', widget: string, required: false, hint: 'Slug del mismo proyecto en EN (sin carpeta).' }
+      - { name: body, label: 'Contenido', widget: markdown }
+
+  # ------------------------------------------------------- PROYECTOS (EN)
+  - name: projects_en
+    label: 'Projects · English'
+    label_singular: 'Project (EN)'
+    folder: 'src/content/projects/en'
+    create: true
+    slug: '{{slug}}'
+    extension: md
+    format: frontmatter
+    fields:
+      - { name: title, label: 'Title', widget: string }
+      - { name: description, label: 'Description', widget: text }
+      - name: type
+        label: 'Type'
+        widget: select
+        options:
+          - { label: 'Work', value: work }
+          - { label: 'For fun', value: fun }
+      - { name: tech, label: 'Tech', widget: list, default: [], required: false }
+      - { name: link, label: 'Demo link', widget: string, required: false }
+      - { name: repo, label: 'Repository', widget: string, required: false }
+      - { name: featured, label: 'Featured (shows on homepage)', widget: boolean, default: false }
+      - { name: order, label: 'Order', widget: number, default: 0, value_type: int }
+      - { name: translationSlug, label: 'Spanish slug', widget: string, required: false, hint: 'Slug of the same project in ES (no folder).' }
+      - { name: body, label: 'Content', widget: markdown }
