@@ -8,15 +8,24 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
+    "preview": "npm run build && wrangler dev",
+    "astro": "astro",
+    "generate-types": "wrangler types",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^13.7.0",
     "@astrojs/rss": "^4.0.18",
     "@fontsource-variable/manrope": "^5.2.8",
     "@fontsource-variable/space-grotesk": "^5.2.10",
     "@fontsource/ibm-plex-mono": "^5.2.7",
     "astro": "^6.4.6"
   },
-  "description": "El sitio de Oscar — mi llama, ya no oculta"
+  "description": "El sitio de Oscar — mi llama, ya no oculta",
+  "devDependencies": {
+    "wrangler": "^4.100.0"
+  },
+  "overrides": {
+    "vite": "^7"
+  }
 }
