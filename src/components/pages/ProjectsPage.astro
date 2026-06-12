@@ -1,0 +1,134 @@
+---
+import ProjectCard from '../ProjectCard.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n/ui';
+import { getProjectsByType } from '../../data/projects';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const workProjects = await getProjectsByType(lang, 'work');
+const funProjects = await getProjectsByType(lang, 'fun');
+---
+
+<section class="container">
+  <header class="page-head reveal visible">
+    <h1>{t('projects.title')}</h1>
+    <p class="page-sub">{t('projects.sub')}</p>
+  </header>
+
+  <div class="group">
+    <div class="group-head">
+      <div class="group-left">
+        <div class="group-title-row">
+          <span class="group-num">01</span>
+          <h2>{t('projects.work')}</h2>
+        </div>
+        <p class="group-sub">{t('projects.work.sub')}</p>
+      </div>
+      <span class="group-count">{workProjects.length} {lang === 'es' ? 'PROYECTOS' : 'PROJECTS'}</span>
+    </div>
+    <div class="grid-2">
+      {workProjects.map((project) => <ProjectCard project={project} lang={lang} />)}
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-head">
+      <div class="group-left">
+        <div class="group-title-row">
+          <span class="group-num">02</span>
+          <h2>{t('projects.fun')}</h2>
+        </div>
+        <p class="group-sub">{t('projects.fun.sub')}</p>
+      </div>
+      <span class="group-count">{funProjects.length} {lang === 'es' ? 'PROYECTOS' : 'PROJECTS'}</span>
+    </div>
+    <div class="grid-2">
+      {funProjects.map((project) => <ProjectCard project={project} lang={lang} />)}
+    </div>
+  </div>
+</section>
+
+<style>
+  .page-head {
+    margin-bottom: 3.5rem;
+  }
+
+  .page-sub {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  .group {
+    margin-bottom: 4rem;
+  }
+
+  .group-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 1px solid var(--hairline);
+    padding-top: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .group-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .group-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .group-num {
+    font-family: var(--font-mono);
+    font-size: 0.94rem;
+    color: var(--text-faint);
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+  }
+
+  .group h2 {
+    margin: 0;
+    font-size: 2.1rem;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+
+  .group-sub {
+    color: var(--text-muted);
+    margin: 8px 0 0;
+    font-size: 1rem;
+  }
+
+  .group-count {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+    white-space: nowrap;
+    padding-bottom: 0.2rem;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+  }
+
+  @media (max-width: 760px) {
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+
+    .group h2 {
+      font-size: 1.6rem;
+    }
+  }
+</style>

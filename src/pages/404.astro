@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import InkBlob from '../components/InkBlob.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/ui';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+
+<Base title="404" cornerBuddy={false}>
+  <section class="container notfound">
+    <InkBlob
+      size={140}
+      phrases={lang === 'es' ? ['¿hmm?', 'aquí no hay nada...', '¿nos perdimos?'] : ['hmm?', 'nothing here...', 'are we lost?']}
+    />
+    <h1>{t('notfound.title')}</h1>
+    <p>{t('notfound.lead')}</p>
+    <a href={lang === 'es' ? '/' : '/en/'} class="btn btn-primary">{t('notfound.back')}</a>
+  </section>
+</Base>
+
+<style>
+  .notfound {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 6rem 1.4rem;
+    gap: 0.6rem;
+  }
+
+  .notfound h1 {
+    margin-top: 1.4rem;
+  }
+
+  .notfound p {
+    color: var(--text-muted);
+    margin-bottom: 1.6rem;
+  }
+</style>

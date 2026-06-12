@@ -1,0 +1,123 @@
+---
+import { getLangFromUrl, useTranslations, getAltLangHref, type Lang } from '../i18n/ui';
+
+interface Props {
+  /** URL alternativa para el conmutador de idioma (p. ej. la traducción de un post) */
+  altLangHref?: string;
+}
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const { altLangHref } = Astro.props;
+
+const prefix = lang === 'es' ? '' : '/en';
+const links = [
+  { href: `${prefix}/`, label: t('nav.home') },
+  { href: `${prefix}/blog/`, label: t('nav.blog') },
+  { href: lang === 'es' ? '/proyectos/' : '/en/projects/', label: t('nav.projects') },
+  { href: lang === 'es' ? '/sobre-mi/' : '/en/about/', label: t('nav.about') },
+];
+
+const switchHref = altLangHref ?? getAltLangHref(Astro.url.pathname, lang);
+const otherLang: Lang = lang === 'es' ? 'en' : 'es';
+
+const normalize = (p: string) => (p.endsWith('/') ? p : p + '/');
+const current = normalize(Astro.url.pathname);
+const isActive = (href: string) =>
+  href === `${prefix}/` ? current === href : current.startsWith(href);
+---
+
+<header class="nav-wrap">
+  <nav class="container nav" aria-label="principal">
+    <a href={`${prefix}/`} class="logo" aria-label={t('site.title')}>
+      oscar<span class="logo-dot">.</span>
+    </a>
+
+    <div class="nav-links">
+      {
+        links.map((link) => (
+          <a href={link.href} class:list={['nav-link', { active: isActive(link.href) }]}>
+            {link.label}
+          </a>
+        ))
+      }
+      <a
+        href={switchHref}
+        class="nav-link lang-switch"
+        aria-label={otherLang === 'en' ? 'Switch to English' : 'Cambiar a español'}
+      >
+        {otherLang.toUpperCase()}
+      </a>
+    </div>
+  </nav>
+</header>
+
+<style>
+  .nav-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    height: 4.2rem;
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .logo-dot {
+    color: var(--text-faint);
+    transition: color 0.2s ease;
+  }
+
+  .logo:hover .logo-dot {
+    color: var(--text);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.7rem;
+  }
+
+  .nav-link {
+    font-family: var(--font-display);
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+  }
+
+  .nav-link:hover,
+  .nav-link.active {
+    color: var(--text);
+  }
+
+  .lang-switch {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+  }
+
+  @media (max-width: 640px) {
+    .nav-links {
+      gap: 1rem;
+    }
+
+    .nav-link {
+      font-size: 0.85rem;
+    }
+  }
+</style>

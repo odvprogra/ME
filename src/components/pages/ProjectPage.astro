@@ -1,0 +1,174 @@
+---
+import { render } from 'astro:content';
+import type { ProjectEntry } from '../../data/projects';
+import { projectSlug } from '../../data/projects';
+import Base from '../../layouts/Base.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n/ui';
+
+interface Props {
+  project: ProjectEntry;
+}
+
+const { project } = Astro.props;
+const { title, description, type, tech, link, repo, translationSlug } = project.data;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const { Content } = await render(project);
+
+const isFun = type === 'fun';
+const badgeLabel = isFun
+  ? lang === 'es'
+    ? 'JUEGO'
+    : 'FUN'
+  : lang === 'es'
+    ? 'TRABAJO'
+    : 'WORK';
+
+const backHref = lang === 'es' ? '/proyectos/' : '/en/projects/';
+const altSlug = translationSlug ?? projectSlug(project);
+const altLangHref =
+  lang === 'es' ? `/en/projects/${altSlug}/` : `/proyectos/${altSlug}/`;
+---
+
+<Base title={title} description={description} altLangHref={altLangHref}>
+  <article class="container narrow project">
+    <header class="project-head">
+      <a href={backHref} class="back animated-link">{t('projects.back')}</a>
+      <div class="title-row">
+        <h1>{title}</h1>
+        <span class:list={['badge', isFun && 'is-fun']}>{badgeLabel}</span>
+      </div>
+      <p class="lead">{description}</p>
+      <div class="meta">
+        <span class="tech">
+          {tech.map((techItem, i) => (
+            <>
+              <span>{techItem}</span>
+              {i < tech.length - 1 && <span class="dot">·</span>}
+            </>
+          ))}
+        </span>
+        <span class="links">
+          {link && (
+            <a href={link} class="animated-link" target="_blank" rel="noopener">
+              demo ↗
+            </a>
+          )}
+          {repo && (
+            <a href={repo} class="animated-link" target="_blank" rel="noopener">
+              {lang === 'es' ? 'código' : 'code'} ↗
+            </a>
+          )}
+        </span>
+      </div>
+    </header>
+
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .project {
+    padding: 3.5rem 1.4rem;
+  }
+
+  .back {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+  }
+
+  .title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1rem 0 0.6rem;
+  }
+
+  .title-row h1 {
+    margin: 0;
+  }
+
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 5px 9px;
+    border-radius: 6px;
+    white-space: nowrap;
+    border: 1px solid var(--hairline);
+    color: var(--text-muted);
+    align-self: center;
+  }
+
+  .badge.is-fun {
+    color: #b0673f;
+    border-color: #e8c9b8;
+  }
+
+  .lead {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1.55;
+    margin: 0 0 1.6rem;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    padding-bottom: 1.8rem;
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .tech {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-faint);
+  }
+
+  .dot {
+    color: #d6d2c9;
+  }
+
+  .links {
+    display: flex;
+    gap: 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .prose :global(h2) {
+    margin-top: 2.2em;
+  }
+
+  .prose :global(p) {
+    color: var(--text-muted);
+  }
+
+  .prose :global(strong) {
+    color: var(--text);
+  }
+
+  .prose :global(ul) {
+    color: var(--text-muted);
+  }
+
+  .prose :global(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 2rem auto;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+  }
+</style>

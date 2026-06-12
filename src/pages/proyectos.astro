@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import ProjectsPage from '../components/pages/ProjectsPage.astro';
+import { useTranslations } from '../i18n/ui';
+
+const t = useTranslations('es');
+---
+
+<Base title={t('projects.title')}>
+  <ProjectsPage />
+</Base>

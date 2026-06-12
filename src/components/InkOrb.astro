@@ -1,0 +1,320 @@
+---
+/**
+ * El ente — mascota del sitio, versión Tinta Minimal: un ser de línea pura.
+ * Flota, parpadea, sigue el cursor con la mirada, se aplasta con el scroll
+ * rápido y al tocarlo sonríe, suelta destellos tipográficos y dice una frase.
+ *
+ * size: tamaño en px · phrases: frases que dice al hacer click (JSON)
+ * label: descripción accesible (si se omite, es decorativo)
+ */
+interface Props {
+  size?: number;
+  phrases?: string[];
+  label?: string;
+  class?: string;
+}
+
+const { size = 96, phrases = [], label, class: className } = Astro.props;
+---
+
+<ink-orb
+  class={className}
+  size={size}
+  phrases={JSON.stringify(phrases)}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}></ink-orb>
+
+<script>
+  class InkOrb extends HTMLElement {
+    #timers: ReturnType<typeof setTimeout>[] = [];
+    #raf = 0;
+    #size = 160;
+    #lastMouseAt = 0;
+    #lastScrollY = 0;
+    #scrollTimer: ReturnType<typeof setTimeout> | null = null;
+    #reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    #onMouseMove = (e: MouseEvent) => this.#lookAt(e.clientX, e.clientY);
+    #onScroll = () => {
+      const dy = Math.abs(window.scrollY - this.#lastScrollY);
+      this.#lastScrollY = window.scrollY;
+      if (dy > 24 && !this.#reduced.matches) {
+        this.classList.add('is-squashed');
+        if (this.#scrollTimer) clearTimeout(this.#scrollTimer);
+        this.#scrollTimer = setTimeout(() => this.classList.remove('is-squashed'), 220);
+      }
+    };
+
+    connectedCallback() {
+      this.#size = Number(this.getAttribute('size')) || 160;
+      this.style.setProperty('--io-size', `${this.#size}px`);
+      this.style.setProperty('--io-unit', `${this.#size / 100}px`);
+      this.innerHTML = `
+        <div class="io-stage">
+          <div class="io-bubble" hidden></div>
+          <div class="io-body">
+            <div class="io-eyes"><span class="io-eye"></span><span class="io-eye"></span></div>
+            <div class="io-mouth"></div>
+          </div>
+        </div>`;
+      document.addEventListener('mousemove', this.#onMouseMove, { passive: true });
+      window.addEventListener('scroll', this.#onScroll, { passive: true });
+      this.addEventListener('click', this.#onClick);
+      this.#scheduleBlink();
+      this.#scheduleWander();
+      this.#lastScrollY = window.scrollY;
+    }
+
+    disconnectedCallback() {
+      document.removeEventListener('mousemove', this.#onMouseMove);
+      window.removeEventListener('scroll', this.#onScroll);
+      this.#timers.forEach(clearTimeout);
+      if (this.#scrollTimer) clearTimeout(this.#scrollTimer);
+      cancelAnimationFrame(this.#raf);
+    }
+
+    #later(fn: () => void, ms: number) {
+      const id = setTimeout(() => {
+        this.#timers = this.#timers.filter((t) => t !== id);
+        if (this.isConnected) fn();
+      }, ms);
+      this.#timers.push(id);
+    }
+
+    /* — la mirada sigue al cursor — */
+    #lookAt(x: number, y: number) {
+      this.#lastMouseAt = Date.now();
+      cancelAnimationFrame(this.#raf);
+      this.#raf = requestAnimationFrame(() => {
+        const r = this.getBoundingClientRect();
+        const dx = x - (r.left + r.width / 2);
+        const dy = y - (r.top + r.height / 2);
+        const dist = Math.hypot(dx, dy) || 1;
+        const max = this.#size * 0.045;
+        this.#setGaze(
+          (dx / dist) * Math.min(max, dist / 25),
+          (dy / dist) * Math.min(max * 0.8, dist / 25)
+        );
+        if (!this.#reduced.matches) {
+          this.style.setProperty('--io-lean', `${(dx / window.innerWidth) * 4}deg`);
+        }
+      });
+    }
+
+    #setGaze(px: number, py: number) {
+      this.style.setProperty('--io-gx', `${px}px`);
+      this.style.setProperty('--io-gy', `${py}px`);
+    }
+
+    /* — parpadeo — */
+    #scheduleBlink() {
+      this.#later(() => {
+        this.#blink();
+        if (Math.random() < 0.2) this.#later(() => this.#blink(), 290);
+        this.#scheduleBlink();
+      }, 2400 + Math.random() * 3600);
+    }
+
+    #blink() {
+      this.style.setProperty('--io-blink', '0.1');
+      this.#later(() => this.style.setProperty('--io-blink', '1'), 130);
+    }
+
+    /* — cuando nadie mueve el mouse, mira alrededor — */
+    #scheduleWander() {
+      this.#later(() => {
+        if (Date.now() - this.#lastMouseAt > 4000) {
+          const m = this.#size * 0.035;
+          this.#setGaze((Math.random() - 0.5) * m * 2, (Math.random() - 0.5) * m * 1.4);
+          this.#later(() => {
+            if (Date.now() - this.#lastMouseAt > 4000) this.#setGaze(0, 0);
+          }, 1200);
+        }
+        this.#scheduleWander();
+      }, 3000 + Math.random() * 3000);
+    }
+
+    /* — click: salto, destellos tipográficos y una frase — */
+    #onClick = () => {
+      this.classList.remove('is-popping');
+      void this.offsetWidth; // reinicia la animación
+      if (!this.#reduced.matches) {
+        this.classList.add('is-popping');
+        const stage = this.querySelector('.io-stage');
+        for (let i = 0; i < 5; i++) {
+          const s = document.createElement('span');
+          s.className = 'io-spark';
+          s.textContent = ['+', '✳', '·'][i % 3];
+          s.style.left = `${25 + Math.random() * 50}%`;
+          s.style.setProperty('--sx', `${(Math.random() - 0.5) * 60}px`);
+          s.style.animationDelay = `${Math.random() * 0.1}s`;
+          s.addEventListener('animationend', () => s.remove());
+          stage?.appendChild(s);
+        }
+      }
+      this.classList.add('is-happy');
+      this.#later(() => this.classList.remove('is-happy'), 1600);
+      const phrases: string[] = JSON.parse(this.getAttribute('phrases') || '[]');
+      const bubble = this.querySelector<HTMLElement>('.io-bubble');
+      if (bubble && phrases.length) {
+        bubble.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+        bubble.hidden = false;
+        bubble.classList.remove('is-visible');
+        void bubble.offsetWidth;
+        bubble.classList.add('is-visible');
+        this.#later(() => bubble.classList.remove('is-visible'), 2400);
+      }
+    };
+  }
+
+  if (!customElements.get('ink-orb')) {
+    customElements.define('ink-orb', InkOrb);
+  }
+</script>
+
+<style is:global>
+  ink-orb {
+    display: inline-block;
+    width: var(--io-size, 160px);
+    height: var(--io-size, 160px);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ink-orb .io-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  ink-orb .io-body {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border: calc(var(--io-unit, 1px) * 1.6) solid var(--ink, #161513);
+    border-radius: 50%;
+    background: var(--bg, #f2f2f0);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--io-unit, 1px) * 7);
+    rotate: var(--io-lean, 0deg);
+    scale: 1;
+    transition: rotate 0.4s ease, scale 0.25s var(--ease-spring, ease);
+    animation: io-bob 4.6s ease-in-out infinite;
+  }
+
+  @keyframes io-bob {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 calc(var(--io-unit, 1px) * -4); }
+  }
+
+  ink-orb.is-squashed .io-body {
+    scale: 1.07 0.91;
+    transition: rotate 0.4s ease, scale 0.15s ease-out;
+  }
+
+  ink-orb.is-popping .io-body {
+    animation: io-bob 4.6s ease-in-out infinite,
+      io-pop 0.5s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+  }
+
+  @keyframes io-pop {
+    0% { scale: 1; }
+    35% { scale: 1.13 0.89; }
+    65% { scale: 0.95 1.07; }
+    100% { scale: 1; }
+  }
+
+  ink-orb .io-eyes {
+    display: flex;
+    gap: calc(var(--io-unit, 1px) * 17);
+    transform: translate(calc(var(--io-gx, 0px) * 0.6), calc(var(--io-gy, 0px) * 0.6))
+      scaleY(var(--io-blink, 1));
+    transition: transform 0.09s ease;
+  }
+
+  ink-orb .io-eye {
+    width: calc(var(--io-unit, 1px) * 6);
+    height: calc(var(--io-unit, 1px) * 6);
+    border-radius: 50%;
+    background: var(--ink, #161513);
+    transition: height 0.2s ease, border-radius 0.2s ease;
+  }
+
+  /* feliz: los puntos se vuelven arcos */
+  ink-orb.is-happy .io-eye {
+    height: calc(var(--io-unit, 1px) * 3);
+    border-radius: calc(var(--io-unit, 1px) * 6) calc(var(--io-unit, 1px) * 6) 0 0;
+  }
+
+  ink-orb .io-mouth {
+    width: calc(var(--io-unit, 1px) * 21);
+    height: calc(var(--io-unit, 1px) * 10);
+    border-bottom: calc(var(--io-unit, 1px) * 1.6) solid var(--ink, #161513);
+    border-radius: 0 0 100px 100px;
+    transform: translate(calc(var(--io-gx, 0px) * 0.3), calc(var(--io-gy, 0px) * 0.3));
+    transition: transform 0.12s ease, width 0.2s ease;
+  }
+
+  ink-orb.is-happy .io-mouth {
+    width: calc(var(--io-unit, 1px) * 28);
+  }
+
+  ink-orb .io-spark {
+    position: absolute;
+    top: 6%;
+    font-family: var(--font-mono, monospace);
+    font-size: calc(var(--io-unit, 1px) * 11);
+    color: var(--ink, #161513);
+    pointer-events: none;
+    animation: io-spark-rise 0.85s ease-out forwards;
+  }
+
+  @keyframes io-spark-rise {
+    0% { opacity: 1; translate: 0 0; rotate: 0deg; }
+    100% { opacity: 0; translate: var(--sx, 0) -64px; rotate: 90deg; }
+  }
+
+  ink-orb .io-bubble {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    background: var(--bg-card, #fff);
+    border: 1.5px solid var(--ink, #161513);
+    color: var(--ink, #161513);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.78rem;
+    padding: 0.5em 0.9em;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s var(--ease-spring, ease);
+    z-index: 2;
+  }
+
+  ink-orb .io-bubble.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  ink-orb .io-bubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--ink, #161513);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ink-orb .io-body {
+      animation: none;
+    }
+  }
+</style>

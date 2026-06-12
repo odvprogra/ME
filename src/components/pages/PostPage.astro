@@ -1,0 +1,87 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { getLangFromUrl, useTranslations, formatDate } from '../../i18n/ui';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const { Content } = await render(post);
+
+const backHref = lang === 'es' ? '/blog/' : '/en/blog/';
+const altLangHref = post.data.translationSlug
+  ? lang === 'es'
+    ? `/en/blog/${post.data.translationSlug}/`
+    : `/blog/${post.data.translationSlug}/`
+  : undefined;
+---
+
+<Base title={post.data.title} description={post.data.description} altLangHref={altLangHref}>
+  <article class="container narrow post">
+    <header class="post-head">
+      <a href={backHref} class="back animated-link">{t('blog.backToBlog')}</a>
+      <h1>{post.data.title}</h1>
+      <div class="meta">
+        <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, lang)}</time>
+        {post.data.tags.map((tag) => <span class="tag">{tag}</span>)}
+      </div>
+    </header>
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .post {
+    padding: 3.5rem 1.4rem;
+  }
+
+  .back {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+  }
+
+  .post-head h1 {
+    margin: 1rem 0 0.8rem;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.8rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .prose :global(h2) {
+    margin-top: 2.2em;
+  }
+
+  .prose :global(p) {
+    color: var(--text-muted);
+  }
+
+  .prose :global(strong) {
+    color: var(--text);
+  }
+
+  .prose :global(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 2rem auto;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+  }
+</style>

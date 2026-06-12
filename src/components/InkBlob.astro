@@ -1,0 +1,590 @@
+---
+/**
+ * El ente — mascota del sitio, concepto "blob en evolución" (Tinta Minimal).
+ * Un ser de línea que cambia de forma constantemente: su silueta ondula con
+ * ruido orgánico, la superficie se abomba hacia el cursor, la mirada lo sigue,
+ * y pasa por emociones (feliz, sorprendido, pensando, dormido) interpolando
+ * todos sus parámetros, así cada transición se ve natural y continua.
+ *
+ * size: tamaño en px · phrases: frases que dice al hacer click (JSON)
+ * label: descripción accesible (si se omite, es decorativo)
+ */
+interface Props {
+  size?: number;
+  phrases?: string[];
+  label?: string;
+  class?: string;
+}
+
+const { size = 96, phrases = [], label, class: className } = Astro.props;
+---
+
+<ink-blob
+  class={className}
+  size={size}
+  phrases={JSON.stringify(phrases)}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}></ink-blob>
+
+<script>
+  type Mood = 'neutral' | 'happy' | 'surprised' | 'thinking' | 'sleepy';
+
+  /** Parámetros continuos de cada emoción; el blob interpola entre ellos. */
+  interface MoodSpec {
+    sx: number; // estiramiento horizontal
+    sy: number; // estiramiento vertical
+    amp: number; // amplitud de la ondulación
+    speed: number; // velocidad de la ondulación
+    droop: number; // >0 se derrite hacia abajo, <0 se estira hacia arriba
+    eye: number; // tamaño de ojos
+    eyeTop: number; // párpado superior (1 abierto, 0 cerrado)
+    eyeBot: number; // borde inferior del ojo (negativo = arco feliz ∩)
+    mw: number; // medio ancho de la boca
+    smile: number; // curvatura de la sonrisa
+    open: number; // apertura de la boca (1 = "o")
+    look: [number, number] | null; // hacia dónde mira si nadie mueve el mouse
+  }
+
+  // amp es relativo al radio y gobierna lóbulos + ondas: 0.11 ≈ masa bien lobulada
+  const MOODS: Record<Mood, MoodSpec> = {
+    neutral:   { sx: 1,    sy: 1,    amp: 0.11,  speed: 1,    droop: 0,     eye: 1,    eyeTop: 1,    eyeBot: 1,     mw: 5.5, smile: 0.55, open: 0,    look: null },
+    happy:     { sx: 1.05, sy: 0.97, amp: 0.14,  speed: 1.7,  droop: 0,     eye: 1,    eyeTop: 1,    eyeBot: -0.55, mw: 8,   smile: 0.95, open: 0.22, look: null },
+    surprised: { sx: 0.93, sy: 1.09, amp: 0.05,  speed: 0.6,  droop: -0.45, eye: 1.45, eyeTop: 1.05, eyeBot: 1.05,  mw: 3.4, smile: 0.05, open: 1,    look: null },
+    thinking:  { sx: 0.99, sy: 1.02, amp: 0.075, speed: 0.7,  droop: -0.12, eye: 0.95, eyeTop: 0.78, eyeBot: 1,     mw: 3.8, smile: 0.18, open: 0,    look: [-3.2, -3.4] },
+    sleepy:    { sx: 1.07, sy: 0.93, amp: 0.06,  speed: 0.45, droop: 0.55,  eye: 1,    eyeTop: 0.28, eyeBot: 0.6,   mw: 4.5, smile: 0.3,  open: 0,    look: [0.6, 1.8] },
+  };
+
+  const N = 12; // puntos del contorno (suficientes para dibujar valles cóncavos)
+  const R = 36; // radio base en unidades del viewBox (100×100)
+  const TAU = Math.PI * 2;
+
+  const fx = (n: number) => n.toFixed(2);
+  const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n));
+
+  /** Curva cerrada y suave (Catmull-Rom → Bézier) por los puntos dados. */
+  function blobPath(pts: [number, number][]) {
+    let d = `M ${fx(pts[0][0])} ${fx(pts[0][1])}`;
+    for (let i = 0; i < N; i++) {
+      const p0 = pts[(i + N - 1) % N];
+      const p1 = pts[i];
+      const p2 = pts[(i + 1) % N];
+      const p3 = pts[(i + 2) % N];
+      d += ` C ${fx(p1[0] + (p2[0] - p0[0]) / 6)} ${fx(p1[1] + (p2[1] - p0[1]) / 6)},`;
+      d += ` ${fx(p2[0] - (p3[0] - p1[0]) / 6)} ${fx(p2[1] - (p3[1] - p1[1]) / 6)},`;
+      d += ` ${fx(p2[0])} ${fx(p2[1])}`;
+    }
+    return d + ' Z';
+  }
+
+  /** Ojo: dos arcos (párpado superior e inferior). bot negativo = arco feliz. */
+  function eyePath(r: number, top: number, bot: number) {
+    const hT = 1.35 * r * top;
+    const hB = 1.35 * r * bot;
+    return `M ${fx(-r)} 0 C ${fx(-r)} ${fx(-hT)}, ${fx(r)} ${fx(-hT)}, ${fx(r)} 0` +
+      ` C ${fx(r)} ${fx(hB)}, ${fx(-r)} ${fx(hB)}, ${fx(-r)} 0 Z`;
+  }
+
+  /** Boca: línea curva que se abre en "o" cuando open > 0 (escala con su ancho). */
+  function mouthPath(w: number, smile: number, open: number) {
+    const mid = smile * w * 0.6;
+    const oh = open * w * 0.95;
+    const hT = (mid - oh) * 1.4;
+    const hB = (mid + oh) * 1.4;
+    return `M ${fx(-w)} 0 C ${fx(-w * 0.45)} ${fx(hT)}, ${fx(w * 0.45)} ${fx(hT)}, ${fx(w)} 0` +
+      ` C ${fx(w * 0.45)} ${fx(hB)}, ${fx(-w * 0.45)} ${fx(hB)}, ${fx(-w)} 0 Z`;
+  }
+
+  type Params = Omit<MoodSpec, 'look'>;
+  const paramsOf = (m: MoodSpec): Params => {
+    const { look: _look, ...rest } = m;
+    return rest;
+  };
+
+  class InkBlob extends HTMLElement {
+    #timers: ReturnType<typeof setTimeout>[] = [];
+    #raf = 0;
+    #running = false;
+    #onScreen = true;
+    #size = 96;
+    #reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    #io: IntersectionObserver | null = null;
+
+    #mood: Mood = 'neutral';
+    #moodToken = 0;
+    #cur: Params = paramsOf(MOODS.neutral);
+
+    // mirada y parpadeo
+    #gx = 0;
+    #gy = 0;
+    #blink = 1;
+    #blinkTgt = 1;
+    #glance: [number, number] | null = null;
+
+    // mouse (coordenadas de pantalla)
+    #mouseX = 0;
+    #mouseY = 0;
+    #mouseAt = 0;
+    #prox = 0; // cercanía suavizada del cursor [0..1]
+    #clicks: number[] = [];
+    #lastInteract = Date.now();
+    #lastScrollY = 0;
+    #scrollTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // forma: lóbulos que rotan + ondas viajeras; fases aleatorias por instancia
+    #t = Math.random() * 100;
+    #lastNow = 0;
+    #irr = Array.from({ length: N }, () => 0.975 + Math.random() * 0.05);
+    #lobes = Math.random() < 0.5 ? 5 : 6;
+    #lobeOff = Math.random() * TAU;
+    #w1 = Math.random() * TAU;
+    #w2 = Math.random() * TAU;
+
+    #body!: SVGPathElement;
+    #face!: SVGGElement;
+    #eyes!: SVGPathElement[];
+    #mouth!: SVGPathElement;
+
+    #onMouseMove = (e: MouseEvent) => {
+      this.#mouseX = e.clientX;
+      this.#mouseY = e.clientY;
+      this.#mouseAt = Date.now();
+      this.#poke();
+      if (!this.#reduced.matches) {
+        this.style.setProperty('--ib-lean', `${(e.clientX / window.innerWidth - 0.5) * 8}deg`);
+      }
+    };
+
+    #onScroll = () => {
+      const dy = Math.abs(window.scrollY - this.#lastScrollY);
+      this.#lastScrollY = window.scrollY;
+      this.#poke();
+      if (dy > 24 && !this.#reduced.matches) {
+        this.classList.add('is-squashed');
+        if (this.#scrollTimer) clearTimeout(this.#scrollTimer);
+        this.#scrollTimer = setTimeout(() => this.classList.remove('is-squashed'), 220);
+      }
+    };
+
+    #onVisibility = () => this.#syncLoop();
+
+    connectedCallback() {
+      this.#size = Number(this.getAttribute('size')) || 96;
+      this.style.setProperty('--ib-size', `${this.#size}px`);
+      this.innerHTML = `
+        <div class="ib-stage">
+          <div class="ib-bubble" hidden></div>
+          <svg class="ib-svg" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+            <path class="ib-body" />
+            <g class="ib-face">
+              <path class="ib-eye" />
+              <path class="ib-eye" />
+              <path class="ib-mouth" />
+            </g>
+          </svg>
+        </div>`;
+      this.#body = this.querySelector('.ib-body')!;
+      this.#face = this.querySelector('.ib-face')!;
+      this.#eyes = [...this.querySelectorAll<SVGPathElement>('.ib-eye')];
+      this.#mouth = this.querySelector('.ib-mouth')!;
+
+      document.addEventListener('mousemove', this.#onMouseMove, { passive: true });
+      window.addEventListener('scroll', this.#onScroll, { passive: true });
+      document.addEventListener('visibilitychange', this.#onVisibility);
+      this.addEventListener('click', this.#onClick);
+      this.#lastScrollY = window.scrollY;
+
+      this.#io = new IntersectionObserver((entries) => {
+        this.#onScreen = entries[0]?.isIntersecting ?? true;
+        this.#syncLoop();
+      });
+      this.#io.observe(this);
+
+      this.#draw(); // primer fotograma (y el único, si hay reduced-motion)
+      this.#syncLoop();
+      this.#scheduleBlink();
+      this.#scheduleIdle();
+    }
+
+    disconnectedCallback() {
+      document.removeEventListener('mousemove', this.#onMouseMove);
+      window.removeEventListener('scroll', this.#onScroll);
+      document.removeEventListener('visibilitychange', this.#onVisibility);
+      this.#io?.disconnect();
+      this.#timers.forEach(clearTimeout);
+      if (this.#scrollTimer) clearTimeout(this.#scrollTimer);
+      this.#stop();
+    }
+
+    #later(fn: () => void, ms: number) {
+      const id = setTimeout(() => {
+        this.#timers = this.#timers.filter((t) => t !== id);
+        if (this.isConnected) fn();
+      }, ms);
+      this.#timers.push(id);
+    }
+
+    /* — bucle de animación: solo corre si está en pantalla y la pestaña visible — */
+    #syncLoop() {
+      const should =
+        this.isConnected && this.#onScreen && !document.hidden && !this.#reduced.matches;
+      if (should && !this.#running) this.#start();
+      else if (!should && this.#running) this.#stop();
+    }
+
+    #start() {
+      this.#running = true;
+      this.#lastNow = performance.now();
+      const tick = (now: number) => {
+        if (!this.#running) return;
+        const dt = clamp((now - this.#lastNow) / 1000, 0, 0.05);
+        this.#lastNow = now;
+        this.#step(dt);
+        this.#draw();
+        this.#raf = requestAnimationFrame(tick);
+      };
+      this.#raf = requestAnimationFrame(tick);
+    }
+
+    #stop() {
+      this.#running = false;
+      cancelAnimationFrame(this.#raf);
+    }
+
+    /* — un paso de simulación: todo se acerca suavemente a su objetivo — */
+    #step(dt: number) {
+      const tgt = MOODS[this.#mood];
+      const k = 1 - Math.exp(-dt * 5); // suavizado de forma/emoción
+      const cur = this.#cur as unknown as Record<string, number>;
+      const spec = tgt as unknown as Record<string, number>;
+      for (const key of Object.keys(this.#cur) as (keyof Params)[]) {
+        cur[key] += (spec[key] - cur[key]) * k;
+      }
+      this.#t += dt * this.#cur.speed;
+
+      // cercanía del cursor → curiosidad (se abomba y agranda ojos)
+      const rect = this.getBoundingClientRect();
+      const dx = this.#mouseX - (rect.left + rect.width / 2);
+      const dy = this.#mouseY - (rect.top + rect.height / 2);
+      const dist = Math.hypot(dx, dy) || 1;
+      const fresh = Date.now() - this.#mouseAt < 2500;
+      const proxTgt =
+        fresh && this.#mood !== 'sleepy' ? clamp(1 - dist / (this.#size * 1.4), 0, 1) : 0;
+      this.#prox += (proxTgt - this.#prox) * (1 - Math.exp(-dt * 6));
+
+      // mirada: cursor > vistazo programado > sesgo de la emoción
+      let lx = 0;
+      let ly = 0;
+      if (fresh) {
+        const m = Math.min(4.5, dist / 25);
+        lx = (dx / dist) * m;
+        ly = (dy / dist) * m * 0.8;
+      } else if (this.#glance) {
+        [lx, ly] = this.#glance;
+      } else if (tgt.look) {
+        [lx, ly] = tgt.look;
+      }
+      const kg = 1 - Math.exp(-dt * 9);
+      this.#gx += (lx - this.#gx) * kg;
+      this.#gy += (ly - this.#gy) * kg;
+      this.#blink += (this.#blinkTgt - this.#blink) * (1 - Math.exp(-dt * 22));
+
+      this.#bulgeAngle = Math.atan2(dy, dx);
+    }
+
+    #bulgeAngle = 0;
+
+    /* — dibuja el fotograma con los parámetros actuales — */
+    #draw() {
+      const c = this.#cur;
+      const pts: [number, number][] = [];
+      for (let i = 0; i < N; i++) {
+        const a = (i / N) * TAU - Math.PI / 2;
+        // lóbulos cóncavos que rotan y respiran + dos ondas viajeras de orden bajo:
+        // estructura de masa (como la referencia), no círculo con ruido
+        const lobe = c.amp * (0.95 + 0.25 * Math.sin(this.#t * 0.33));
+        let r =
+          R *
+          (this.#irr[i] +
+            lobe * Math.cos(this.#lobes * a + this.#t * 0.25 + this.#lobeOff) +
+            c.amp * 0.5 * Math.sin(2 * a + this.#t * 0.55 + this.#w1) +
+            c.amp * 0.35 * Math.sin(3 * a - this.#t * 0.42 + this.#w2));
+        // derretirse (droop>0) o estirarse (droop<0)
+        const down = Math.max(0, Math.sin(a));
+        const up = Math.max(0, -Math.sin(a));
+        r *= 1 + c.droop * (0.32 * down - 0.18 * up);
+        // abombarse hacia el cursor
+        const align = Math.max(0, Math.cos(a - this.#bulgeAngle));
+        r += this.#prox * 5.5 * align * align * align;
+        pts.push([50 + Math.cos(a) * r * c.sx, 50 + c.droop * 2 + Math.sin(a) * r * c.sy]);
+      }
+      this.#body.setAttribute('d', blobPath(pts));
+
+      const faceY = c.droop * 2.4;
+      this.#face.setAttribute('transform', `translate(0 ${fx(faceY)})`);
+
+      const eyeR = 2.2 * c.eye * (1 + this.#prox * 0.22);
+      const eyeD = eyePath(eyeR, c.eyeTop * this.#blink, c.eyeBot * this.#blink);
+      this.#eyes.forEach((eye, i) => {
+        eye.setAttribute('d', eyeD);
+        const x = 50 + (i === 0 ? -7 : 7) + this.#gx * 0.6;
+        eye.setAttribute('transform', `translate(${fx(x)} ${fx(44.5 + this.#gy * 0.6)})`);
+      });
+
+      this.#mouth.setAttribute('d', mouthPath(c.mw, c.smile, c.open));
+      this.#mouth.setAttribute(
+        'transform',
+        `translate(${fx(50 + this.#gx * 0.3)} ${fx(52 + this.#gy * 0.3)})`
+      );
+    }
+
+    /* — emociones — */
+    #setMood(mood: Mood, ms?: number) {
+      this.#mood = mood;
+      const token = ++this.#moodToken;
+      if (this.#reduced.matches) {
+        // sin animación: salta directo a la emoción y redibuja
+        this.#cur = paramsOf(MOODS[mood]);
+        this.#draw();
+      }
+      if (ms) {
+        this.#later(() => {
+          if (this.#moodToken === token) this.#setMood('neutral');
+        }, ms);
+      }
+    }
+
+    /** Cualquier interacción lo despierta. */
+    #poke() {
+      this.#lastInteract = Date.now();
+      if (this.#mood === 'sleepy') this.#setMood('surprised', 650);
+      else if (this.#mood === 'thinking') this.#setMood('neutral');
+    }
+
+    /* — parpadeo — */
+    #scheduleBlink() {
+      this.#later(() => {
+        this.#blinkDo();
+        if (Math.random() < 0.2) this.#later(() => this.#blinkDo(), 290);
+        this.#scheduleBlink();
+      }, 2400 + Math.random() * 3600);
+    }
+
+    #blinkDo() {
+      this.#blinkTgt = 0.06;
+      this.#later(() => (this.#blinkTgt = 1), 130);
+    }
+
+    /* — sin interacción: piensa, mira alrededor y al final se duerme — */
+    #scheduleIdle() {
+      this.#later(() => {
+        const idle = Date.now() - this.#lastInteract;
+        if (idle > 35000) {
+          if (this.#mood === 'neutral') this.#setMood('sleepy');
+        } else if (idle > 8000 && this.#mood === 'neutral') {
+          if (Math.random() < 0.4) {
+            this.#setMood('thinking', 2600 + Math.random() * 1400);
+          } else {
+            this.#glance = [(Math.random() - 0.5) * 6.4, (Math.random() - 0.5) * 4.4];
+            this.#later(() => (this.#glance = null), 1300);
+          }
+        }
+        this.#scheduleIdle();
+      }, 3000 + Math.random() * 3000);
+    }
+
+    /* — click: feliz + destellos + frase; clicks rápidos lo sorprenden — */
+    #onClick = () => {
+      const now = Date.now();
+      this.#clicks = [...this.#clicks.filter((t) => now - t < 900), now];
+      this.#poke();
+
+      if (this.#clicks.length >= 3) {
+        this.#clicks = [];
+        this.#setMood('surprised', 1400);
+      } else {
+        this.#setMood('happy', 1600);
+      }
+
+      if (!this.#reduced.matches) {
+        this.classList.remove('is-popping');
+        void this.offsetWidth; // reinicia la animación
+        this.classList.add('is-popping');
+        const stage = this.querySelector('.ib-stage');
+        for (let i = 0; i < 5; i++) {
+          const s = document.createElement('span');
+          s.className = 'ib-spark';
+          s.textContent = ['+', '✳', '·'][i % 3];
+          s.style.left = `${25 + Math.random() * 50}%`;
+          s.style.setProperty('--sx', `${(Math.random() - 0.5) * 60}px`);
+          s.style.animationDelay = `${Math.random() * 0.1}s`;
+          s.addEventListener('animationend', () => s.remove());
+          stage?.appendChild(s);
+        }
+      }
+
+      const phrases: string[] = JSON.parse(this.getAttribute('phrases') || '[]');
+      const bubble = this.querySelector<HTMLElement>('.ib-bubble');
+      if (bubble && phrases.length) {
+        bubble.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+        bubble.hidden = false;
+        bubble.classList.remove('is-visible');
+        void bubble.offsetWidth;
+        bubble.classList.add('is-visible');
+        this.#later(() => bubble.classList.remove('is-visible'), 2400);
+      }
+    };
+  }
+
+  if (!customElements.get('ink-blob')) {
+    customElements.define('ink-blob', InkBlob);
+  }
+</script>
+
+<style is:global>
+  ink-blob {
+    position: relative;
+    display: inline-block;
+    width: var(--ib-size, 96px);
+    height: var(--ib-size, 96px);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* sombra en el suelo: asienta la masa mientras el cuerpo flota encima */
+  ink-blob::after {
+    content: '';
+    position: absolute;
+    left: 20%;
+    right: 20%;
+    bottom: -5%;
+    height: 5%;
+    border-radius: 50%;
+    background: var(--ink, #161513);
+    opacity: 0.07;
+    animation: ib-shadow 4.6s ease-in-out infinite;
+  }
+
+  @keyframes ib-shadow {
+    0%, 100% { transform: scaleX(1); opacity: 0.07; }
+    50% { transform: scaleX(0.88); opacity: 0.05; }
+  }
+
+  ink-blob .ib-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    animation: ib-bob 4.6s ease-in-out infinite;
+  }
+
+  @keyframes ib-bob {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -4%; }
+  }
+
+  ink-blob .ib-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    rotate: var(--ib-lean, 0deg);
+    scale: 1;
+    transition: rotate 0.5s ease, scale 0.25s var(--ease-spring, ease);
+  }
+
+  ink-blob.is-squashed .ib-svg {
+    scale: 1.07 0.91;
+    transition: rotate 0.5s ease, scale 0.15s ease-out;
+  }
+
+  ink-blob.is-popping .ib-svg {
+    animation: ib-pop 0.5s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+  }
+
+  @keyframes ib-pop {
+    0% { scale: 1; }
+    35% { scale: 1.13 0.89; }
+    65% { scale: 0.95 1.07; }
+    100% { scale: 1; }
+  }
+
+  ink-blob .ib-body {
+    fill: var(--bg, #f2f2f0);
+    stroke: var(--ink, #161513);
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+  }
+
+  ink-blob .ib-eye {
+    fill: var(--ink, #161513);
+    stroke: var(--ink, #161513);
+    stroke-width: 0.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  ink-blob .ib-mouth {
+    fill: var(--ink, #161513);
+    stroke: var(--ink, #161513);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  ink-blob .ib-spark {
+    position: absolute;
+    top: 6%;
+    font-family: var(--font-mono, monospace);
+    font-size: calc(var(--ib-size, 96px) * 0.11);
+    color: var(--ink, #161513);
+    pointer-events: none;
+    animation: ib-spark-rise 0.85s ease-out forwards;
+  }
+
+  @keyframes ib-spark-rise {
+    0% { opacity: 1; translate: 0 0; rotate: 0deg; }
+    100% { opacity: 0; translate: var(--sx, 0) -64px; rotate: 90deg; }
+  }
+
+  ink-blob .ib-bubble {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    background: var(--bg-card, #fff);
+    border: 1.5px solid var(--ink, #161513);
+    color: var(--ink, #161513);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.78rem;
+    padding: 0.5em 0.9em;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s var(--ease-spring, ease);
+    z-index: 2;
+  }
+
+  ink-blob .ib-bubble.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  ink-blob .ib-bubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--ink, #161513);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ink-blob .ib-stage,
+    ink-blob::after {
+      animation: none;
+    }
+  }
+</style>

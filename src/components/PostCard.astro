@@ -1,0 +1,85 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatDate, type Lang } from '../i18n/ui';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  lang: Lang;
+}
+
+const { post, lang } = Astro.props;
+const slug = post.id.split('/').slice(1).join('/');
+const href = lang === 'es' ? `/blog/${slug}/` : `/en/blog/${slug}/`;
+---
+
+<a href={href} class="post-row reveal">
+  <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, lang)}</time>
+  <span class="post-main">
+    <span class="post-title">{post.data.title}</span>
+    <span class="post-desc">{post.data.description}</span>
+  </span>
+  <span class="post-arrow" aria-hidden="true">→</span>
+</a>
+
+<style>
+  .post-row {
+    display: grid;
+    grid-template-columns: 10.5rem 1fr auto;
+    gap: 1.2rem;
+    align-items: baseline;
+    padding: 1.15rem 0.2rem;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--text);
+    transition: background 0.2s ease, padding-left 0.25s ease;
+  }
+
+  .post-row:hover {
+    background: var(--bg-card);
+    padding-left: 0.7rem;
+  }
+
+  time {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--text-faint);
+  }
+
+  .post-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .post-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.12rem;
+    letter-spacing: -0.01em;
+  }
+
+  .post-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .post-arrow {
+    color: var(--text-faint);
+    transition: transform 0.25s ease, color 0.2s ease;
+  }
+
+  .post-row:hover .post-arrow {
+    transform: translateX(4px);
+    color: var(--text);
+  }
+
+  @media (max-width: 700px) {
+    .post-row {
+      grid-template-columns: 1fr auto;
+    }
+
+    time {
+      grid-column: 1 / -1;
+      order: -1;
+    }
+  }
+</style>

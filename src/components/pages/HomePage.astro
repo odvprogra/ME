@@ -1,0 +1,196 @@
+---
+import { getCollection } from 'astro:content';
+import InkBlob from '../InkBlob.astro';
+import PostCard from '../PostCard.astro';
+import ProjectCard from '../ProjectCard.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n/ui';
+import { getFeaturedProjects } from '../../data/projects';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const posts = (await getCollection('blog', ({ id, data }) => id.startsWith(`${lang}/`) && !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const featuredProjects = await getFeaturedProjects(lang);
+
+const heroPhrases =
+  lang === 'es'
+    ? ['hola.', 'estoy vivo.', 'menos es más.', 'XD.']
+    : ['hi.', "I'm alive.", 'less is more.', 'welcome to the house.'];
+
+const blogHref = lang === 'es' ? '/blog/' : '/en/blog/';
+const projectsHref = lang === 'es' ? '/proyectos/' : '/en/projects/';
+const aboutHref = lang === 'es' ? '/sobre-mi/' : '/en/about/';
+---
+
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="hero-text">
+      <span class="eyebrow"><span class="dot"></span>{t('hero.status')}</span>
+      <h1>{t('hero.greeting')}</h1>
+      <p class="lead">{t('hero.lead')}</p>
+      <div class="hero-actions">
+        <a href={blogHref} class="btn btn-primary">{t('hero.cta.blog')}</a>
+        <a href={projectsHref} class="link-ink">{t('hero.cta.projects')} →</a>
+      </div>
+    </div>
+
+    <div class="hero-buddy">
+      <InkBlob
+        size={200}
+        phrases={heroPhrases}
+        label={lang === 'es' ? 'Un pequeño ser de tinta que te observa' : 'A little ink being watching you'}
+      />
+    </div>
+  </div>
+</section>
+
+<section class="container">
+  <div class="section-head reveal">
+    <h2>{t('home.latestPosts')}</h2>
+    <a href={blogHref} class="animated-link">{t('home.viewAll')} →</a>
+  </div>
+  <div class="post-list">
+    {posts.map((post) => <PostCard post={post} lang={lang} />)}
+  </div>
+</section>
+
+<section class="container">
+  <div class="section-head reveal">
+    <h2>{t('home.projects')}</h2>
+    <a href={projectsHref} class="animated-link">{t('home.viewAll')} →</a>
+  </div>
+  <div class="grid-3">
+    {featuredProjects.map((project) => <ProjectCard project={project} lang={lang} />)}
+  </div>
+</section>
+
+<section class="container">
+  <blockquote class="manifesto reveal">
+    {
+      lang === 'es' ? (
+        <>
+          <p>
+            “No es lo mismo acceso a la información que comprensión, y no es lo mismo comprensión que sabiduría.”
+          </p>
+          <a href={aboutHref} class="animated-link">Conoce mi filosofía →</a>
+        </>
+      ) : (
+        <>
+          <p>
+            “This site is the house. Social media is the street. Community emerges from saying
+            something true — not from an algorithm pushing you.”
+          </p>
+          <a href={aboutHref} class="animated-link">Get to know my philosophy →</a>
+        </>
+      )
+    }
+  </blockquote>
+</section>
+
+<style>
+  .hero {
+    padding: 5.5rem 0 4rem;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.25fr 0.75fr;
+    align-items: center;
+    gap: 2.5rem;
+  }
+
+  .hero-text h1 {
+    margin: 1.1rem 0 1.2rem;
+  }
+
+  .lead {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 30em;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 1.7rem;
+  }
+
+  .link-ink {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--text);
+    border-bottom: 2px solid var(--text);
+    padding-bottom: 2px;
+    transition: opacity 0.2s ease;
+  }
+
+  .link-ink:hover {
+    opacity: 0.6;
+  }
+
+  .hero-buddy {
+    display: flex;
+    justify-content: center;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.6rem;
+  }
+
+  .section-head h2 {
+    margin: 0;
+  }
+
+  .post-list {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+  }
+
+  .manifesto {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-style: normal;
+    letter-spacing: -0.01em;
+    margin: 0;
+    padding: 0.2em 0 0.2em 1.6rem;
+    border-left: 3px solid var(--ink);
+    max-width: 46rem;
+  }
+
+  .manifesto p {
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
+    line-height: 1.35;
+    color: var(--text);
+    margin-bottom: 0.8em;
+  }
+
+  @media (max-width: 880px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-buddy {
+      order: -1;
+      min-height: 220px;
+    }
+
+    .grid-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

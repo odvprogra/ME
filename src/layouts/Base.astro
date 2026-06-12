@@ -1,0 +1,111 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '@fontsource-variable/space-grotesk';
+import '@fontsource-variable/manrope';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '../styles/global.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import InkBlob from '../components/InkBlob.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/ui';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** URL alternativa para el conmutador de idioma */
+  altLangHref?: string;
+  /** Oculta la llamita de la esquina (la portada usa la versión grande) */
+  cornerBuddy?: boolean;
+}
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const {
+  title,
+  description = t('site.description'),
+  altLangHref,
+  cornerBuddy = true,
+} = Astro.props;
+
+const pageTitle = title ? `${title} · ${t('site.title')}` : `${t('site.title')} — ${t('site.tagline')}`;
+
+const cornerPhrases =
+  lang === 'es'
+    ? ['hola.', 'sigo aquí.', '¿explorando?', 'gracias por venir.', 'aquí no hay algoritmos.']
+    : ['hi.', 'still here.', 'exploring?', 'thanks for stopping by.', 'no algorithms here.'];
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="alternate" type="application/rss+xml" title={t('site.title')} href="/rss.xml" />
+    <ClientRouter />
+  </head>
+  <body>
+    <Nav altLangHref={altLangHref} />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+    {
+      cornerBuddy && (
+        <div class="corner-buddy" transition:persist="corner-buddy">
+          <InkBlob size={54} phrases={cornerPhrases} />
+        </div>
+      )
+    }
+    <script>
+      // Aparición suave de los elementos .reveal al entrar en pantalla
+      function initReveal() {
+        const items = document.querySelectorAll('.reveal:not(.visible)');
+        if (!('IntersectionObserver' in window)) {
+          items.forEach((el) => el.classList.add('visible'));
+          return;
+        }
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+        );
+        items.forEach((el) => observer.observe(el));
+      }
+      document.addEventListener('DOMContentLoaded', initReveal);
+      document.addEventListener('astro:page-load', initReveal);
+    </script>
+  </body>
+</html>
+
+<style>
+  .corner-buddy {
+    position: fixed;
+    right: 1.3rem;
+    bottom: 1.3rem;
+    z-index: 60;
+  }
+
+  @media (max-width: 640px) {
+    .corner-buddy {
+      right: 0.9rem;
+      bottom: 0.9rem;
+      transform: scale(0.8);
+      transform-origin: bottom right;
+    }
+  }
+</style>

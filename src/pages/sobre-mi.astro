@@ -1,0 +1,116 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Sobre mí" description="Quién soy, cómo pienso y por qué este sitio existe.">
+  <article class="container narrow about">
+    <header class="reveal visible">
+      <h1>Sobre mí</h1>
+      <p class="page-sub">Quién soy, cómo pienso y por qué este lugar existe.</p>
+    </header>
+
+    <div class="prose">
+      <h2>Quién soy</h2>
+      <p>
+        Soy Oscar. Construyo cosas — algunas por trabajo, otras por puro fuego propio. Me interesa
+        cómo funcionan las cosas, pero más me interesa <em>por qué</em> las hacemos.
+      </p>
+      <p>
+        <!-- ✏️ Edita este párrafo con tu historia: de dónde eres, qué haces, qué te trajo aquí. -->
+        Este párrafo está esperando tu historia real. Escríbela con tu voz — esta página es tu
+        manifiesto, no tu currículum.
+      </p>
+
+      <h2>Cómo pienso</h2>
+      <ul class="principles">
+        <li>
+          <strong>Profundidad antes que alcance.</strong> Prefiero diez lectores que se queden a mil
+          que pasen de largo.
+        </li>
+        <li>
+          <strong>Prefiero que me encuentren.</strong> No salgo a gritar por atención; dejo cosas
+          verdaderas donde puedan hallarlas.
+        </li>
+        <li>
+          <strong>Construir &gt; opinar.</strong> Las opiniones valen más cuando vienen de alguien
+          que hace cosas.
+        </li>
+        <li>
+          <strong>La curiosidad como motor.</strong> Los mejores proyectos que he hecho empezaron
+          con un «¿qué pasaría si...?».
+        </li>
+      </ul>
+
+      <h2>Por qué existe este sitio</h2>
+      <p>
+        Durante un tiempo me pregunté si tener un sitio propio en vez de publicar en redes era una
+        forma elegante de esconderme. Concluí que no — siempre que no lo mantenga en secreto.
+      </p>
+      <p>
+        Las redes sociales son una plaza pública: cualquiera pasa, juzga o ignora. Este sitio es mi
+        casa: el que llega es porque buscó llegar. Aquí está lo que dura — mi filosofía, mis
+        proyectos, mis opiniones desarrolladas. Las redes serán la calle que lleva hasta aquí.
+      </p>
+      <p>
+        No quiero ser una llama oculta. Por eso este sitio tiene una mascota: un pequeño ser de
+        trazo simple, vivo y a la vista de todos — la prueba de que lo que estaba escondido ahora
+        está a la vista. <a href="/blog/encendiendo-la-llama/">La historia completa está en el primer post.</a>
+      </p>
+
+      <h2>Qué me gusta</h2>
+      <p>
+        <!-- ✏️ Reemplaza con tus gustos reales: música, libros, juegos, comida, manías. -->
+        Lista pendiente de ser escrita: la música que no me suelto, los libros que me marcaron, las
+        ideas que colecciono. (Oscar: este es tu espacio para ser específico — lo específico es lo
+        que conecta.)
+      </p>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .about {
+    padding: 3.5rem 1.4rem;
+  }
+
+  .page-sub {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin-top: 0;
+  }
+
+  .prose :global(h2),
+  .prose h2 {
+    margin-top: 2.2em;
+  }
+
+  .prose p {
+    color: var(--text-muted);
+  }
+
+  .prose strong {
+    color: var(--text);
+  }
+
+  .principles {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .principles li {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.3rem;
+    color: var(--text-muted);
+    transition: border-color 0.25s ease, transform 0.25s var(--ease-spring);
+  }
+
+  .principles li:hover {
+    border-color: var(--border-hover);
+    transform: translateX(4px);
+  }
+</style>

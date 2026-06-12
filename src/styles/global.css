@@ -1,0 +1,330 @@
+/* ============================================
+   Sistema de diseño — Tinta Minimal
+   sobrio, tipografía protagonista
+   ============================================ */
+
+:root {
+  /* Color */
+  --bg: #f2f2f0; /* papel */
+  --bg-elevated: #eae9e5;
+  --bg-card: #ffffff;
+  --text: #161513; /* tinta */
+  --text-muted: #6e6a62;
+  --text-faint: #a8a29a;
+  --ink: #161513;
+  --hairline: #e2dfd8;
+  --border: #e2dfd8;
+  --border-hover: #161513;
+  --accent: #161513;
+
+  /* Tipografía */
+  --font-display: 'Space Grotesk Variable', sans-serif;
+  --font-body: 'Manrope Variable', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Ritmo */
+  --radius: 10px;
+  --radius-lg: 14px;
+  --max-width: 68rem;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1.0425rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Textura sutil de papel */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* ---------- Tipografía ---------- */
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  margin: 0 0 0.5em;
+  text-wrap: balance;
+}
+
+h1 { font-size: clamp(2.6rem, 6.5vw, 4.2rem); line-height: 0.98; letter-spacing: -0.03em; }
+h2 { font-size: clamp(1.5rem, 3.2vw, 1.9rem); }
+h3 { font-size: 1.12rem; letter-spacing: -0.01em; }
+
+p { margin: 0 0 1.2em; }
+
+a {
+  color: var(--ink);
+  text-decoration: none;
+  position: relative;
+}
+
+/* Subrayado de tinta en enlaces de prosa */
+.prose a,
+a.animated-link {
+  background-image: linear-gradient(var(--ink), var(--ink));
+  background-size: 0% 1.5px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.3s ease, opacity 0.2s ease;
+}
+
+.prose a {
+  background-size: 100% 1.5px;
+}
+
+.prose a:hover {
+  opacity: 0.6;
+}
+
+a.animated-link:hover {
+  background-size: 100% 1.5px;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--bg-elevated);
+  border: 1px solid var(--hairline);
+  border-radius: 5px;
+  padding: 0.12em 0.4em;
+}
+
+pre {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.3rem;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+blockquote {
+  margin: 1.6em 0;
+  padding: 0.2em 0 0.2em 1.3em;
+  border-left: 3px solid var(--ink);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: var(--hairline);
+  margin: 3rem 0;
+}
+
+/* ---------- Layout ---------- */
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.narrow {
+  max-width: 44rem;
+}
+
+main {
+  min-height: 70vh;
+}
+
+/* section.container es necesario: la clase .container (padding: 0 1.5rem)
+   le gana al selector de elemento y aplastaría el ritmo vertical */
+section,
+section.container {
+  padding-block: 4rem;
+}
+
+/* la primera sección de cada página respira más bajo el header,
+   al mismo ritmo que el hero de la portada */
+main > section:first-child {
+  padding-top: 5.5rem;
+}
+
+/* ---------- Componentes base ---------- */
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.eyebrow .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink);
+  animation: breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.7); opacity: 0.5; }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.8em 1.55em;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--bg-card);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  opacity: 0.88;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+}
+
+.btn-ghost:hover {
+  transform: translateY(-2px);
+  background: var(--bg-card);
+}
+
+.card {
+  display: block;
+  background: var(--bg-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--ink);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.28em 0.7em;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid var(--hairline);
+  color: var(--text-muted);
+}
+
+/* ---------- Animación de aparición al hacer scroll ---------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- Scrollbar ---------- */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cfccc4;
+  border-radius: 100px;
+  border: 2px solid var(--bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b5b1a7;
+}
+
+/* ---------- Movimiento reducido ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,0 +1,115 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="About me" description="Who I am, how I think, and why this site exists.">
+  <article class="container narrow about">
+    <header class="reveal visible">
+      <h1>About me</h1>
+      <p class="page-sub">Who I am, how I think, and why this place exists.</p>
+    </header>
+
+    <div class="prose">
+      <h2>Who I am</h2>
+      <p>
+        I'm Oscar. I build things — some for work, others out of my own fire. I'm interested in how
+        things work, but I'm more interested in <em>why</em> we make them.
+      </p>
+      <p>
+        <!-- ✏️ Edit this paragraph with your real story: where you're from, what you do, what brought you here. -->
+        This paragraph is waiting for your real story. Write it in your own voice — this page is
+        your manifesto, not your résumé.
+      </p>
+
+      <h2>How I think</h2>
+      <ul class="principles">
+        <li>
+          <strong>Depth before reach.</strong> I'd rather have ten readers who stay than a thousand
+          who scroll past.
+        </li>
+        <li>
+          <strong>I'd rather be found.</strong> I don't go out shouting for attention; I leave true
+          things where people can find them.
+        </li>
+        <li>
+          <strong>Building &gt; opining.</strong> Opinions are worth more when they come from
+          someone who makes things.
+        </li>
+        <li>
+          <strong>Curiosity as the engine.</strong> The best projects I've made started with a
+          "what if...?".
+        </li>
+      </ul>
+
+      <h2>Why this site exists</h2>
+      <p>
+        For a while I wondered whether having my own site instead of posting on social media was an
+        elegant way of hiding. I concluded it isn't — as long as I don't keep it a secret.
+      </p>
+      <p>
+        Social media is a public square: anyone walks by, judges, or ignores. This site is my
+        house: whoever arrives, arrives because they meant to. What lasts lives here — my
+        philosophy, my projects, my developed opinions. Social media will be the street that leads
+        here.
+      </p>
+      <p>
+        I don't want to be a hidden flame. That's why this site has a mascot: a little being of
+        simple strokes, alive and in plain sight — proof that what was hidden is now visible.
+        <a href="/en/blog/lighting-the-flame/">The full story is in the first post.</a>
+      </p>
+
+      <h2>What I like</h2>
+      <p>
+        <!-- ✏️ Replace with your real tastes: music, books, games, food, quirks. -->
+        A list waiting to be written: the music I can't let go of, the books that marked me, the
+        ideas I collect. (Oscar: this is your space to be specific — specific is what connects.)
+      </p>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .about {
+    padding: 3.5rem 1.4rem;
+  }
+
+  .page-sub {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin-top: 0;
+  }
+
+  .prose h2 {
+    margin-top: 2.2em;
+  }
+
+  .prose p {
+    color: var(--text-muted);
+  }
+
+  .prose strong {
+    color: var(--text);
+  }
+
+  .principles {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .principles li {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.3rem;
+    color: var(--text-muted);
+    transition: border-color 0.25s ease, transform 0.25s var(--ease-spring);
+  }
+
+  .principles li:hover {
+    border-color: var(--border-hover);
+    transform: translateX(4px);
+  }
+</style>
